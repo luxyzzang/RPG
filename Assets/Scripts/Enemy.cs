@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
@@ -14,7 +12,7 @@ public class Enemy : MonoBehaviour
 
     private const string attackTrigger = "Attack";
     private const string hitTrigger = "Hit";
-    private const string dieTrigger = "Attack";
+    private const string dieTrigger = "Die";
 
     public void EnemyAttack()
     {
