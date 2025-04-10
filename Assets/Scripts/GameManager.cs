@@ -1,41 +1,137 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    public Image ClearPopup;
-    public Image GameOverPopup;
-    public Slider hpSilder;
-    public Slider mpSlider;
-    public Slider bossSlider;
+    [Header("Components")]
+    public Animator anim;
+    public Transform enemy;
+    public Text txtHpValue;
+    public Text txtMpValue;
+    public Text txtEnemyHpValue;
+    public Slider sliderHp;
+    public Slider sliderMp;
+    public Slider sliderEnemyHp;
+    public AudioSource audio1;
+    public AudioSource audio2;
 
-    private int playerHP = 100;
-    private int playerMP = 100;
-    private int bossHP = 1000;
+    [Header("Stats")]
+    public int enemyHp;
+    public int enemyHpMax;
+    public int enemyDmg;
+
+    public int playerHp;
+    public int playerHpMax;
+    public int playerMp;
+    public int playerMpMax;
+    public int playerAtk1;
+    public int playerCost1;
+    public int playerAtk2;
+    public int playerCost2;
+
+    [Header("Effects")]
+    public string effectName1;
+    public string effectName2;
+
+    public bool canAttack = true;
+
+    private void Start()
+    {
+        ChangePlayerInfo();
+        ChangeEnemyInfo();
+    }
 
     public void Attack1()
     {
-        bossHP -= Random.Range(10, 101);
-        playerHP -= Random.Range(1, 6);
+        if (canAttack)
+        {
+            enemyHp -= playerAtk1;
+            if (enemyHp < 0) enemyHp = 0;
+            ChangeEnemyInfo();
+            audio1.Play();
+            anim.SetTrigger("Hit");
+
+            GameObject effect = Resources.Load<GameObject>(effectName1);
+            Instantiate(effect, enemy.position + Vector3.back, effect.transform.rotation);
+
+            if (enemyHp <= 0)
+            {
+                anim.SetTrigger("Die");
+                enemyHp = 0;
+                canAttack = false;
+                CancelInvoke();
+                Invoke("GoToEnding", 2f);
+                return;
+            }
+
+            Invoke("ResetDelay", 4f);
+            Invoke("EnemyAttack", 2f);
+            canAttack = false;
+        }   
     }
 
     public void Attack2()
     {
-        if (playerMP >= 20)
+        if (canAttack && playerMp >= playerCost2)
         {
-            bossHP -= Random.Range(50, 151);
-            playerHP -= Random.Range(11, 16);
-            playerMP -= 20;
+            playerMp -= playerCost2;
+            enemyHp -= playerAtk2;
+            if (enemyHp < 0) enemyHp = 0;
+            ChangePlayerInfo() ;
+            ChangeEnemyInfo();
+            audio2.Play();
+            anim.SetTrigger("Hit");
+
+            GameObject effect = Resources.Load<GameObject>(effectName2);
+            Instantiate(effect, enemy.position + Vector3.back, effect.transform.rotation);
+
+            if (enemyHp <= 0)
+            {
+                anim.SetTrigger("Die");
+                enemyHp = 0;
+                canAttack = false;
+                CancelInvoke();
+                Invoke("GoToEnding", 2f);
+                return;
+            }
+
+            Invoke("ResetDelay", 4f);
+            Invoke("EnemyAttack", 2f);
+            canAttack = false;
         }
     }
 
-    private void Update()
+    public void EnemyAttack()
     {
-        if (playerHP < 0) { GameOverPopup.gameObject.SetActive(true); }
-        if (bossHP < 0) { ClearPopup.gameObject.SetActive(true); }
+        anim.SetTrigger("Attack");
+        playerHp -= enemyDmg;
+        if (playerHp < 0) playerHp = 0;
+        ChangePlayerInfo();
+    }
 
-        hpSilder.value = playerHP / 100f;
-        mpSlider.value = playerMP / 100f;
-        bossSlider.value = bossHP / 1000f;
+    public void ResetDelay()
+    {
+        canAttack = true;
+    }
+
+    public void ChangeEnemyInfo()
+    {
+        txtEnemyHpValue.text = enemyHp.ToString();
+        sliderEnemyHp.value = enemyHp * 1f / enemyHpMax;
+    }
+
+    public void ChangePlayerInfo()
+    {
+        txtHpValue.text = playerHp.ToString();
+        sliderHp.value = playerHp * 1f / playerHpMax;
+
+        txtMpValue.text = playerMp.ToString();
+        sliderMp.value = playerMp * 1f / playerMpMax;
+    }
+
+    public void GoToEnding()
+    {
+        SceneManager.LoadScene("Ending");
     }
 }
